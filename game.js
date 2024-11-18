@@ -13,6 +13,7 @@ const BRICK_COLUMNS = 10;
 const BRICK_WIDTH = canvas.width / BRICK_COLUMNS;
 const BRICK_HEIGHT = 20;
 const BRICK_PADDING = 2;
+const BALL_SPEED = 8;
 let score = 0;
 let highScore = localStorage.getItem('highScore') || 0;
 let bricks = [];
@@ -24,11 +25,13 @@ let isMovingRight = false;
 //kreiram objekte loptica i donja ploča kako bi sve bilo na jednom mjestu. Tu se mogu mijenjati parametri
 let ball = {
     x: canvas.width / 2,
-    y: canvas.height - 30,
+    y: canvas.height - 45,
     dx: 4 * (Math.random() > 0.5 ? 1 : -1),
-    dy: -4,
-    radius: BALL_RADIUS
+    dy: -(Math.random() * 2 + Math.random() * 10),
+    radius: BALL_RADIUS,
+    speed: BALL_SPEED
 };
+normalizeBallSpeed()
 let paddle = {
     x: (canvas.width - PADDLE_WIDTH) / 2,
     y: canvas.height - PADDLE_HEIGHT - 10,
@@ -173,14 +176,17 @@ gameLoop();
     Također, ako loptica pogodi u donji dio ekrana aktivira se varijabla gameOver koja završava igru
  */
 function moveBall() {
+
     ball.x += ball.dx;
     ball.y += ball.dy;
 
     if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
         ball.dx *= -1;
+        normalizeBallSpeed()
     }
     if (ball.y - ball.radius < 0) {
         ball.dy *= -1;
+        normalizeBallSpeed()
     }
 
     if (ball.y + ball.radius > canvas.height) {
@@ -190,6 +196,11 @@ function moveBall() {
             localStorage.setItem('highScore', highScore);
         }
     }
+}
+function normalizeBallSpeed() {
+    const magnitude = Math.sqrt(ball.dx ** 2 + ball.dy ** 2); // Trenutna brzina
+    ball.dx = (ball.dx / magnitude) * ball.speed; // Normaliziraj dx
+    ball.dy = (ball.dy / magnitude) * ball.speed; // Normaliziraj dy
 }
 /*
     Funkcija kojom provjeravam je li loptica pogodila u ciglu i ima li još cigli na ekranu.
@@ -219,11 +230,13 @@ function collisionDetection() {
         winGame = true;
     }
     if (
-        ball.x > paddle.x &&
+        ball.dy > 0 &&
+        ball.x > paddle.x  &&
         ball.x < paddle.x + paddle.width &&
         ball.y + ball.radius > paddle.y
     ) {
-        ball.dy = -ball.dy;
+        ball.dy = -Math.abs(ball.dy);
+        ball.y = paddle.y - ball.radius;
     }
 }
 /*
